@@ -12,15 +12,6 @@ router = Router()
 
 
 
-PROFILE_FIELDS = [
-    ("gender", "Укажи, пожалуйста, пол (м/ж)."),
-    ("age", "Сколько тебе лет?"),
-    ("height", "Какой у тебя рост в сантиметрах?"),
-    ("weight", "Какой вес в килограммах?"),
-    ("goal", "Какова цель: похудение, поддержание или набор?"),
-    ("activity", "Какой уровень активности (низкая, умеренная, высокая)?"),
-]
-
 
 
 def _parse_value(field: str, text: str):
@@ -41,36 +32,4 @@ def _parse_value(field: str, text: str):
     )
 
 
-@router.message()
 
-    text = (message.text or "").strip()
-    try:
-        value = _parse_value(step, text)
-    except Exception:
-        await message.answer("Не совсем понял, повтори, пожалуйста.")
-        return
-
-    user_service.update_pending(user_id, step, value)
-    pending = user_service.get_pending(user_id)
-
-
-    next_index = next((i for i, (field, _) in enumerate(PROFILE_FIELDS) if field == step), len(PROFILE_FIELDS) - 1)
-    if step == "activity":
-        profile = user_service.save_profile(user_id, pending)
-        summary = (
-            f"Готово! Вот твои ориентиры:\n"
-            f"Калории: {profile.norm_kcal:.0f}\n"
-            f"Белки: {profile.norm_p:.0f} г\n"
-            f"Жиры: {profile.norm_f:.0f} г\n"
-            f"Углеводы: {profile.norm_c:.0f} г\n"
-            "Это ориентировочные значения, не медицинские рекомендации."
-        )
-        await message.answer(summary, reply_markup=main_kb)
-        user_service.set_step(user_id, None)
-
-        return
-
-    next_field, prompt = PROFILE_FIELDS[next_index + 1]
-    user_service.set_step(user_id, next_field)
-
-    await message.answer(prompt)
