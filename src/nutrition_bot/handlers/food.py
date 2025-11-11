@@ -29,10 +29,10 @@ def _normalize_name(name: str) -> str:
 
 
 def _format_food_line(item: dict) -> str:
-    grams = item.get("grams", 0)
+    grams = item.get("grams", 0.0)
     return (
-        f"{item.get('name', 'блюдо')} {grams:.0f} г — {item.get('kcal', 0):.0f} ккал, "
-        f"Б: {item.get('protein', 0):.0f}, Ж: {item.get('fat', 0):.0f}, У: {item.get('carb', 0):.0f}"
+        f"{item.get('name', 'блюдо')} {grams:.0f} г — {item.get('kcal', 0.0):.0f} ккал, "
+        f"Б: {item.get('protein', 0.0):.0f}, Ж: {item.get('fat', 0.0):.0f}, У: {item.get('carb', 0.0):.0f}"
     )
 
 
@@ -64,6 +64,49 @@ def _item_from_template(template: dict, grams: float | None) -> dict | None:
     }
 
 
+def _coerce_number(value) -> float:
+    if value is None:
+        return 0.0
+    if isinstance(value, (int, float)):
+        return float(value)
+    try:
+        return float(str(value).replace(",", "."))
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _normalize_item(item: dict) -> dict | None:
+    name = (item.get("name") or "блюдо").strip()
+    grams = _coerce_number(item.get("grams"))
+    if grams <= 0:
+        return None
+
+    macros = {
+        "kcal": _coerce_number(item.get("kcal")),
+        "protein": _coerce_number(item.get("protein")),
+        "fat": _coerce_number(item.get("fat")),
+        "carb": _coerce_number(item.get("carb")),
+    }
+
+    if all(value == 0.0 for value in macros.values()):
+        product = product_db.find_product(name)
+        if product:
+            factor = grams / 100.0
+            macros = {
+                "kcal": float(product.get("kcal", 0.0)) * factor,
+                "protein": float(product.get("protein", 0.0)) * factor,
+                "fat": float(product.get("fat", 0.0)) * factor,
+                "carb": float(product.get("carb", 0.0)) * factor,
+            }
+
+    if all(value == 0.0 for value in macros.values()):
+        return None
+
+    normalized = {"name": name, "grams": grams}
+    normalized.update(macros)
+    return normalized
+
+
 def _parse_segments(text: str) -> list[Tuple[str, float]]:
     segments: list[Tuple[str, float]] = []
     for match in _FOOD_RE.finditer(text):
@@ -82,17 +125,26 @@ def _parse_segments(text: str) -> list[Tuple[str, float]]:
 
 
 async def _persist_and_reply(message: Message, foods: List[dict]) -> None:
-    if not foods:
+    normalized: list[dict] = []
+    for item in foods:
+        normalized_item = _normalize_item(item)
+        if normalized_item:
+            normalized.append(normalized_item)
+
+    if not normalized:
+        if foods:
+            await message.answer("Нужно знать массу и состав порции. Напиши, например: 'курица 150'.")
+            return
         await message.answer("Похоже, это не еда. Напиши, например: 'овсянка 150'.")
         return
 
     user_id = message.from_user.id
-    for item in foods:
+    for item in normalized:
         food_service.add_food(user_id, item)
 
     totals = food_service.get_today_totals(user_id)
     reply_lines = [
-        "✅ Добавил: " + "; ".join(_format_food_line(item) for item in foods),
+        "✅ Добавил: " + "; ".join(_format_food_line(item) for item in normalized),
         (
             "Итого за сегодня: "
             f"{totals.kcal:.0f} ккал, Б: {totals.protein:.0f}, Ж: {totals.fat:.0f}, У: {totals.carb:.0f}."
