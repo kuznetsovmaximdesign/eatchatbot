@@ -17,9 +17,6 @@ from ..services.templates import resolve_template
 
 router = Router()
 
-
-_FOOD_RE = re.compile(
-    r"(?P<name>[\wёЁа-яА-Я\s\-,'"]+?)\s*(?P<grams>\d+(?:[.,]\d+)?)\s*(?:г|гр|грамм|ml|мл|кг|kg)?\b",
     re.IGNORECASE,
 )
 
@@ -111,7 +108,7 @@ def _normalize_item(item: dict) -> dict | None:
 
 def _parse_segments(text: str) -> list[Tuple[str, float]]:
     segments: list[Tuple[str, float]] = []
-    for match in _FOOD_RE.finditer(text):
+
         name = (match.group("name") or "").strip()
         grams_str = match.group("grams") or "0"
         try:
@@ -242,6 +239,7 @@ async def handle_photo(message: Message) -> None:
 async def handle_food(message: Message) -> None:
     text = (message.text or "").strip()
     user_id = message.from_user.id
+
 
     if text == "📊 Текущие итоги":
         from .summary import send_current_summary
