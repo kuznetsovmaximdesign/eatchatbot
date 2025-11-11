@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from aiogram import F
 from aiogram import Router
+
 from aiogram.types import Message
 
 from ..keyboards import main_kb
@@ -45,7 +46,7 @@ async def fill_profile(message: Message) -> None:
     user_id = message.from_user.id
     step = user_service.get_step(user_id)
     if not step:
-        return
+
     text = (message.text or "").strip()
     try:
         value = _parse_value(step, text)
