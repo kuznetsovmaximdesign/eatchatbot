@@ -3,23 +3,13 @@ from __future__ import annotations
 
 from aiogram import F
 from aiogram import Router
-from aiogram.types import Message
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
+
 
 from ..keyboards import main_kb
 from ..services import user_service
 
 router = Router()
 
-
-class ProfileStates(StatesGroup):
-    gender = State()
-    age = State()
-    height = State()
-    weight = State()
-    goal = State()
-    activity = State()
 
 
 PROFILE_FIELDS = [
@@ -32,15 +22,6 @@ PROFILE_FIELDS = [
 ]
 
 
-STEP_TO_STATE = {
-    "gender": ProfileStates.gender,
-    "age": ProfileStates.age,
-    "height": ProfileStates.height,
-    "weight": ProfileStates.weight,
-    "goal": ProfileStates.goal,
-    "activity": ProfileStates.activity,
-}
-
 
 def _parse_value(field: str, text: str):
     text = text.strip()
@@ -52,9 +33,7 @@ def _parse_value(field: str, text: str):
 
 
 @router.message(F.text == "/start")
-async def cmd_start(message: Message, state: FSMContext) -> None:
-    user_service.set_step(message.from_user.id, "gender")
-    await state.set_state(ProfileStates.gender)
+
     await message.answer(
         "Привет! Я помогу тебе считать питание и КБЖУ.\n"
         "Давай настроим профиль.\n"
@@ -63,12 +42,7 @@ async def cmd_start(message: Message, state: FSMContext) -> None:
 
 
 @router.message()
-async def fill_profile(message: Message, state: FSMContext) -> None:
-    user_id = message.from_user.id
-    step = user_service.get_step(user_id)
-    if not step:
-        # Профиль уже заполнен или этап не установлен — выходим.
-        return
+
     text = (message.text or "").strip()
     try:
         value = _parse_value(step, text)
@@ -79,11 +53,6 @@ async def fill_profile(message: Message, state: FSMContext) -> None:
     user_service.update_pending(user_id, step, value)
     pending = user_service.get_pending(user_id)
 
-    if step == "gender":
-        user_service.set_step(user_id, "age")
-        await state.set_state(ProfileStates.age)
-        await message.answer("Теперь укажи свой возраст:")
-        return
 
     next_index = next((i for i, (field, _) in enumerate(PROFILE_FIELDS) if field == step), len(PROFILE_FIELDS) - 1)
     if step == "activity":
@@ -98,10 +67,10 @@ async def fill_profile(message: Message, state: FSMContext) -> None:
         )
         await message.answer(summary, reply_markup=main_kb)
         user_service.set_step(user_id, None)
-        await state.clear()
+
         return
 
     next_field, prompt = PROFILE_FIELDS[next_index + 1]
     user_service.set_step(user_id, next_field)
-    await state.set_state(STEP_TO_STATE[next_field])
+
     await message.answer(prompt)
