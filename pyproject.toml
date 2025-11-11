@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nutrition-bot"
+version = "0.2.0"
+description = "Telegram-бот для учёта питания и подсчёта КБЖУ"
+authors = [{name = "NutritionBot"}]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "aiogram>=3.4",
+    "apscheduler>=3.10",
+    "pytz>=2024.1",
+    "python-dotenv>=1.0",
+    "requests>=2.32",
+]
+
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
