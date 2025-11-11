@@ -17,6 +17,7 @@ from ..services.templates import resolve_template
 
 router = Router()
 
+
     re.IGNORECASE,
 )
 
@@ -239,6 +240,7 @@ async def handle_photo(message: Message) -> None:
 async def handle_food(message: Message) -> None:
     text = (message.text or "").strip()
     user_id = message.from_user.id
+
 
 
     if text == "📊 Текущие итоги":
