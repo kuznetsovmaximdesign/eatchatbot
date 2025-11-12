@@ -112,3 +112,9 @@ sudo systemctl status nutrition-bot.service --no-pager
 ```bash
 pytest
 ```
+
+## Подготовка релиза
+
+- Соберите ветку `release/clean` в один коммит и замените `main` через `git push origin +HEAD:main`.
+- Создайте тег и GitHub Release `v0.2.1` из обновлённого `main` (https://github.com/kuznetsovmaximdesign/eatchatbot/releases/new).
+- После релиза верните защиту ветки `main`.

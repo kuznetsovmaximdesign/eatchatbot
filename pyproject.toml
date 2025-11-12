@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nutrition-bot"
-version = "0.2.0"
+version = "0.2.1"
 description = "Telegram-бот для учёта питания и подсчёта КБЖУ"
 authors = [{name = "NutritionBot"}]
 readme = "README.md"
