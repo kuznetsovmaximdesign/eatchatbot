@@ -4,19 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nutrition-bot"
-version = "0.2.1"
+
 description = "Telegram-бот для учёта питания и подсчёта КБЖУ"
 authors = [{name = "NutritionBot"}]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "aiogram>=3.4,<3.5",
-    "apscheduler>=3.10,<3.11",
-    "pytz>=2024.1,<2025.0",
-    "python-dotenv>=1.0,<2.0",
-    "requests>=2.31,<3.0",
-    "requests-oauthlib>=1.3,<2.0",
-]
 
 [tool.setuptools]
 package-dir = {"" = "src"}

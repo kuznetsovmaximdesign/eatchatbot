@@ -37,9 +37,7 @@ async def main() -> None:
 
     scheduler = setup_scheduler(bot=bot, tz=tz)
     scheduler.start()
-    logging.info("Scheduler started")
 
-    logging.info("Start polling")
     await dp.start_polling(bot)
 
 
